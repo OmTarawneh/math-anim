@@ -1,7 +1,8 @@
-from manim import BLUE, Circle, Create, Scene
+from base import ShortScene
+from manim import BLUE, Circle, Create
 
 
-class Hello(Scene):
+class Hello(ShortScene):
     def construct(self) -> None:
         circle = Circle()
 
