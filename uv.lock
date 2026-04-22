@@ -282,7 +282,7 @@ wheels = [
 [[package]]
 name = "math-anim"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "manim" },
     { name = "numpy" },
