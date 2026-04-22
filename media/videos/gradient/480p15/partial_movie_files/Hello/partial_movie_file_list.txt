@@ -1,5 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/Users/omar.altarawneh/personal/me/math-anim/media/videos/gradient/480p15/partial_movie_files/Hello/1584795214_3789429803_223132457.mp4'
-file 'file:/Users/omar.altarawneh/personal/me/math-anim/media/videos/gradient/480p15/partial_movie_files/Hello/4072820271_1754310298_151624741.mp4'
-file 'file:/Users/omar.altarawneh/personal/me/math-anim/media/videos/gradient/480p15/partial_movie_files/Hello/4072820271_940115497_578674303.mp4'
-file 'file:/Users/omar.altarawneh/personal/me/math-anim/media/videos/gradient/480p15/partial_movie_files/Hello/4072820271_1754310298_1142241166.mp4'
