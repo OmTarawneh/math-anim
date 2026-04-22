@@ -1,0 +1,17 @@
+[project]
+name = "math-anim"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = ["manim>=0.20.1", "numpy>=2.4.4"]
+
+[tool.poe.tasks]
+scene = "manim -p"
+low = "manim -p -ql"
+high = "manim -p -qh"
+last-frame = "manim -ps"
+render = "manim -qh --write_to_movie"
+
+[dependency-groups]
+dev = ["poethepoet>=0.44.0"]
