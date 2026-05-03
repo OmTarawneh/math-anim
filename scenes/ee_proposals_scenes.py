@@ -23,13 +23,11 @@ from manim import (
     Polygon,
     Rectangle,
     RoundedRectangle,
-)
-from manim import Text as _ManimText
-from manim import (
     Transform,
     VGroup,
     Write,
 )
+from manim import Text as _ManimText
 
 
 # Pango's default font fallback on this system rasterizes small Text with
@@ -39,6 +37,8 @@ from manim import (
 def Text(*args, **kwargs):
     kwargs.setdefault("font", "Helvetica")
     return _ManimText(*args, **kwargs)
+
+
 from theme import (
     ACCENT,
     ACCENT_3,
@@ -278,7 +278,7 @@ class EE01(NormalScene):
         self.wait(2.4)
 
         # ──────────────────────────────────────────────────────────
-        # BEAT 4 (18–28s) — The number lands
+        # BEAT 4 — The number lands, then leaves
         # ──────────────────────────────────────────────────────────
         scene_so_far = VGroup(
             fe_group,
@@ -303,17 +303,9 @@ class EE01(NormalScene):
         ).arrange(RIGHT, buff=0.35)
 
         big_block = VGroup(big_eng, big_env).arrange(DOWN, buff=0.25)
-        big_block.move_to(ORIGIN + UP * 0.25)
+        big_block.move_to(ORIGIN)
 
-        tagline = Text(
-            "The queue is always full.",
-            color=ACCENT,
-            font_size=36,
-            slant="ITALIC",
-        )
-        tagline.next_to(big_block, DOWN, buff=0.55)
-
-        self.play(scene_so_far.animate.set_opacity(0.18), run_time=0.8)
+        self.play(FadeOut(scene_so_far), run_time=0.8)
         self.play(
             LaggedStart(
                 FadeIn(big_eng, shift=UP * 0.3),
@@ -322,29 +314,9 @@ class EE01(NormalScene):
             ),
             run_time=1.6,
         )
-        self.wait(2.0)
-        self.play(Write(tagline), run_time=1.6)
-        self.wait(4.0)
-
-        # ──────────────────────────────────────────────────────────
-        # BEAT 5 (28–35s) — Hold and transition out
-        # ──────────────────────────────────────────────────────────
-        self.play(scene_so_far.animate.set_opacity(0.05), run_time=0.9)
-
-        clock = VGroup(
-            Circle(radius=0.22, color=MUTED, stroke_width=2.5, fill_opacity=0),
-            Line((0, 0, 0), (0, 0.14, 0), color=MUTED, stroke_width=2.5),
-            Line((0, 0, 0), (0.10, 0, 0), color=MUTED, stroke_width=2.5),
-        )
-        clock.next_to(tagline, RIGHT, buff=0.4)
-
-        self.play(FadeIn(clock, shift=LEFT * 0.15), run_time=0.7)
-        self.wait(2.6)
-        self.play(
-            FadeOut(VGroup(scene_so_far, big_block, tagline, clock)),
-            run_time=1.8,
-        )
-        self.wait(0.5)
+        self.wait(3.5)
+        self.play(FadeOut(big_block), run_time=1.0)
+        self.wait(0.3)
 
 
 def _engineer_circle(radius: float = 0.45) -> Circle:
@@ -475,33 +447,49 @@ class EE02(NormalScene):
             ),
             run_time=4.4,
         )
-        self.wait(2.0)
-        # Cumulative beat 2: 1.4 + 4.4 + 2.0 = 7.8 ≈ 8s ✓
+        # Six seconds of silence on the grid. Let the audience count the heads.
+        self.wait(6.0)
 
         # ──────────────────────────────────────────────────────────
-        # BEAT 3 (16–25s) — Bubbles fade, counter ticks, headline
+        # BEAT 3 — Counter builds the math against the silhouettes,
+        # then the same number scales to fill the screen.
         # ──────────────────────────────────────────────────────────
         all_piles = VGroup(central, surrounding)
-        self.play(all_piles.animate.set_opacity(0.06), run_time=0.9)
 
-        counter = Text("15 min", color=ACCENT, font_size=36, weight="BOLD")
-        counter.to_corner(UR, buff=0.6)
-        counter_b = Text("30 min", color=ACCENT, font_size=36, weight="BOLD")
-        counter_b.to_corner(UR, buff=0.6)
-        counter_c = Text(
+        counter = Text(
             "1.5 hrs/week per engineer",
             color=ACCENT,
             font_size=36,
             weight="BOLD",
         )
-        counter_c.to_corner(UR, buff=0.6)
+        counter.to_corner(UR, buff=0.6)
 
         self.play(FadeIn(counter, shift=UP * 0.2), run_time=0.5)
-        self.wait(0.7)
-        self.play(Transform(counter, counter_b), run_time=0.5)
-        self.wait(0.7)
-        self.play(Transform(counter, counter_c), run_time=0.6)
-        self.wait(1.6)
+        self.wait(1.5)
+
+        # Show the multiplication explicitly — audience must see how 1.5 → 19.8.
+        step_mult = Text(
+            "1.5  ×  13 engineers",
+            color=ACCENT,
+            font_size=36,
+            weight="BOLD",
+        )
+        step_mult.move_to(counter)
+        self.play(Transform(counter, step_mult), run_time=0.6)
+        self.wait(1.3)
+
+        step_result = Text(
+            "=  ~19.8 hrs/week",
+            color=ACCENT,
+            font_size=36,
+            weight="BOLD",
+        )
+        step_result.move_to(counter)
+        self.play(Transform(counter, step_result), run_time=0.6)
+        self.wait(1.4)
+
+        # The math is earned — dim the silhouettes and let the number scale up.
+        self.play(all_piles.animate.set_opacity(0.06), run_time=0.6)
 
         big_number = Text(
             "~19.8 engineering hours/week",
@@ -512,118 +500,17 @@ class EE02(NormalScene):
         )
         big_number.move_to(ORIGIN + UP * 0.35)
 
-        self.play(Transform(counter, big_number), run_time=1.2)
-        self.wait(0.4)
-
-        tagline = Text(
-            "lost to coordination",
-            color=MUTED,
-            font_size=32,
-            slant="ITALIC",
-        )
-        tagline.next_to(big_number, DOWN, buff=0.55)
-
-        self.play(Write(tagline), run_time=1.4)
-        self.wait(1.5)
-        # Cumulative beat 3: 0.9 + 0.5 + 0.7 + 0.5 + 0.7 + 0.6 + 1.6 + 1.2 + 0.4 + 1.4 + 1.5 = 10.0 ≈ 9s
+        # Same number, scaled to the screen — small-to-big, not pop-in.
+        self.play(Transform(counter, big_number), run_time=1.0)
+        self.wait(3.0)
 
 
 class EE03(NormalScene):
     def construct(self) -> None:
-        # ──────────────────────────────────────────────────────────
-        # BEAT 1 (0–8s) — 40-segment bar fills with red
-        # ──────────────────────────────────────────────────────────
+        # Single sustained metaphor: red hours fall into a pile, dollars follow.
         seg_w, seg_h, gap = 0.27, 0.62, 0.02
-        n_segs = 40
-        red_count = 20  # 19.8 hrs ≈ 20 segments
+        red_count = 20  # 19.8 hrs ≈ 20 blocks
 
-        bar_segs: list[Rectangle] = [
-            Rectangle(
-                width=seg_w,
-                height=seg_h,
-                color=INK,
-                stroke_width=0.6,
-                fill_color=CREAM,
-                fill_opacity=1.0,
-            )
-            for _ in range(n_segs)
-        ]
-        bar = VGroup(*bar_segs)
-        bar.arrange(RIGHT, buff=gap)
-        bar.move_to((0, 0.5, 0))
-
-        bar_label = Text(
-            "40-hour work week",
-            color=MUTED,
-            font_size=22,
-            slant="ITALIC",
-        )
-        bar_label.next_to(bar, UP, buff=0.32)
-
-        counter = Text("0 hrs lost", color=PROBLEM, font_size=44, weight="BOLD")
-        counter.next_to(bar_label, UP, buff=0.45)
-
-        self.wait(0.3)
-        self.play(
-            LaggedStart(*[FadeIn(s) for s in bar_segs], lag_ratio=0.015),
-            run_time=0.8,
-        )
-        self.play(
-            FadeIn(bar_label, shift=DOWN * 0.1),
-            FadeIn(counter, shift=DOWN * 0.15),
-            run_time=0.4,
-        )
-
-        def fill_red(seg: Rectangle) -> Animation:
-            return cast(
-                Animation,
-                seg.animate.set_fill(PROBLEM, opacity=1.0).set_stroke(
-                    PROBLEM, width=0.8
-                ),
-            )
-
-        def make_counter(text: str) -> Text:
-            t = Text(text, color=PROBLEM, font_size=44, weight="BOLD")
-            t.move_to(counter.get_center())
-            return t
-
-        # Phase 1 — slow start: 0..2 segments (1.5 hrs)
-        self.play(
-            LaggedStart(*[fill_red(bar_segs[i]) for i in range(0, 2)], lag_ratio=0.6),
-            run_time=1.5,
-        )
-        self.play(Transform(counter, make_counter("1.5 hrs lost")), run_time=0.3)
-
-        # Phase 2 — slow: +1 segment (3 hrs)
-        self.play(fill_red(bar_segs[2]), run_time=0.5)
-        self.play(Transform(counter, make_counter("3 hrs lost")), run_time=0.3)
-
-        # Phase 3 — accelerating: +6 segments (9 hrs)
-        self.play(
-            LaggedStart(*[fill_red(bar_segs[i]) for i in range(3, 9)], lag_ratio=0.18),
-            run_time=1.5,
-        )
-        self.play(Transform(counter, make_counter("9 hrs lost")), run_time=0.3)
-
-        # Phase 4 — fast: +11 segments (≈19.8 hrs total)
-        self.play(
-            LaggedStart(
-                *[fill_red(bar_segs[i]) for i in range(9, red_count)], lag_ratio=0.07
-            ),
-            run_time=1.5,
-        )
-        self.play(Transform(counter, make_counter("19.8 hrs lost")), run_time=0.3)
-        self.wait(0.3)
-        # Cumulative ≈ 0.3+0.8+0.4+1.5+0.3+0.5+0.3+1.5+0.3+1.5+0.3+0.3 = 8.0 ✓
-
-        # ──────────────────────────────────────────────────────────
-        # BEAT 2 (8–18s) — Red sand falls into LEFT column; money on RIGHT
-        # ──────────────────────────────────────────────────────────
-        red_segs = bar_segs[:red_count]
-        cream_segs = VGroup(*bar_segs[red_count:])
-
-        # Pile lands at the LEFT column's Beat 3 anchor — zero pile motion at the
-        # Beat 2→3 transition. Right side reserved for the dollar block.
         col_x_left = -3.6
         col_x_right = 3.0
         pile_center_x = col_x_left
@@ -634,32 +521,63 @@ class EE03(NormalScene):
         pile_bottom_y = pile_center_y - (pile_rows - 1) / 2 * cell_h
         pile_targets: list[tuple[float, float, float]] = []
         for k in range(red_count):
-            row = k // pile_cols  # 0 = bottom-most row
+            row = k // pile_cols
             col = k % pile_cols
             tx = pile_center_x + (col - (pile_cols - 1) / 2) * cell_w
             ty = pile_bottom_y + row * cell_h
             pile_targets.append((tx, ty, 0))
 
-        self.play(
-            cream_segs.animate.set_opacity(0.0),
-            FadeOut(counter, shift=UP * 0.3),
-            FadeOut(bar_label, shift=UP * 0.2),
-            run_time=0.6,
-        )
+        spawn_y = 4.0
+        red_segs: list[Rectangle] = []
+        for i in range(red_count):
+            block = Rectangle(
+                width=seg_w,
+                height=seg_h,
+                color=PROBLEM,
+                stroke_width=0.8,
+                fill_color=PROBLEM,
+                fill_opacity=1.0,
+            )
+            block.move_to((pile_targets[i][0], spawn_y, 0))
+            red_segs.append(block)
+            self.add(block)
 
-        # Sand pour to the left column
+        counter = Text("0 hrs lost", color=PROBLEM, font_size=44, weight="BOLD")
+        counter.move_to((col_x_right, 2.4, 0))
+
+        def make_counter(text: str) -> Text:
+            t = Text(text, color=PROBLEM, font_size=44, weight="BOLD")
+            t.move_to(counter.get_center())
+            return t
+
+        def fall(seg: Rectangle, target: tuple[float, float, float]) -> Animation:
+            return cast(Animation, seg.animate.move_to(target))
+
+        self.wait(0.3)
+        self.play(FadeIn(counter, shift=DOWN * 0.15), run_time=0.5)
+
+        # Two phases — slow start, fast finish.
         self.play(
             LaggedStart(
-                *[
-                    cast(Animation, seg.animate.move_to(pile_targets[i]))
-                    for i, seg in enumerate(red_segs)
-                ],
-                lag_ratio=0.06,
+                *[fall(red_segs[i], pile_targets[i]) for i in range(0, 3)],
+                lag_ratio=0.45,
             ),
-            run_time=3.6,
+            run_time=1.8,
         )
+        self.play(Transform(counter, make_counter("3 hrs lost")), run_time=0.3)
+        self.play(
+            LaggedStart(
+                *[fall(red_segs[i], pile_targets[i]) for i in range(3, red_count)],
+                lag_ratio=0.10,
+            ),
+            run_time=2.6,
+        )
+        self.play(Transform(counter, make_counter("19.8 hrs lost")), run_time=0.3)
+        self.wait(1.0)
 
-        # $ counter climbs on the RIGHT, beside the pile
+        # Money counter takes over the right column.
+        self.play(FadeOut(counter, shift=UP * 0.2), run_time=0.4)
+
         money_y = 1.0
         money_states = ["$0", "$250", "$550", "$800", "$1000"]
         money = Text(money_states[0], color=PROBLEM, font_size=68, weight="BOLD")
@@ -671,7 +589,6 @@ class EE03(NormalScene):
             new_money.move_to(money.get_center())
             self.play(Transform(money, new_money), run_time=0.32)
 
-        # Expand to "~$1000 / month"
         money_full = VGroup(
             Text("~$1000", color=PROBLEM, font_size=68, weight="BOLD"),
             Text("/ month", color=MUTED, font_size=40, weight="MEDIUM"),
@@ -680,106 +597,279 @@ class EE03(NormalScene):
 
         self.play(Transform(money, money_full), run_time=0.7)
 
-        sub = Text(
-            "in lost productivity",
-            color=MUTED,
-            font_size=26,
-            slant="ITALIC",
-        )
-        sub.next_to(money_full, DOWN, buff=0.25)
-        sub.set_x(col_x_right)
-
+        # The math, not a tagline — earns its place.
         calc = Text(
             "19.8 hrs/week × ~$12/hr × 4 weeks",
             color=MUTED,
             font_size=22,
         )
         calc.move_to((0, -3.4, 0))
-
-        self.play(FadeIn(sub, shift=UP * 0.1), run_time=0.6)
         self.play(FadeIn(calc, shift=UP * 0.08), run_time=0.6)
-        self.wait(2.0)
-        # Beat 2 total ≈ 0.6 + 3.6 + 0.4 + 0.32*4 + 0.7 + 0.6 + 0.6 + 2.0 = 9.78 ≈ 10s
+        self.wait(2.5)
+
+
+class EE03B(NormalScene):
+    def construct(self) -> None:
+        # Trajectory: two repos share three envs. Migration is nearly done —
+        # sale and profile are the core pages still on www-hub. When they
+        # land in hub-next, the envs go red.
+
+        TILE_W, TILE_H = 0.7, 0.30
+
+        def page_tile(text: str = "", highlight: bool = False) -> VGroup:
+            color = ACCENT if highlight else MUTED
+            fill_op = 0.32 if highlight else 0.20
+            tile = Rectangle(
+                width=TILE_W,
+                height=TILE_H,
+                color=color,
+                stroke_width=1.5 if highlight else 1.0,
+                fill_color=color,
+                fill_opacity=fill_op,
+            )
+            if text:
+                t = Text(text, color=color, font_size=11, weight="BOLD")
+                t.move_to(tile.get_center())
+                return VGroup(tile, t)
+            return VGroup(tile)
 
         # ──────────────────────────────────────────────────────────
-        # BEAT 3 (18–30s) — Parallel two-column comparison
-        # Pile is already at the left anchor from Beat 2; here we just
-        # clear sub/calc, slide $1000 from the right column to over-pile,
-        # and add the right column.
+        # BEAT 1 — Two repos, three shared envs
         # ──────────────────────────────────────────────────────────
-        col_x_right = 3.6  # Beat 2 used 3.0 for money; tighten alignment now
-        y_header = 3.0
-        y_big = 2.0
-        y_visual = pile_center_y
-        y_tag = -2.6
-
-        self.play(
-            FadeOut(sub, shift=DOWN * 0.15),
-            FadeOut(calc, shift=DOWN * 0.2),
-            run_time=0.6,
-        )
-
-        # Transform money "~$1000 / month" → over-pile "$1000 / mo"
-        left_big = VGroup(
-            Text("$1000", color=PROBLEM, font_size=58, weight="BOLD"),
-            Text("/ mo", color=PROBLEM, font_size=58, weight="BOLD"),
-        ).arrange(RIGHT, buff=0.22, aligned_edge=DOWN)
-        left_big.move_to((col_x_left, y_big, 0))
-
-        self.play(Transform(money, left_big), run_time=1.0)
-
-        # LEFT column add-ons
-        left_header = Text("today's cost", color=MUTED, font_size=24, slant="ITALIC")
-        left_header.move_to((col_x_left, y_header, 0))
-
-        left_tag = Text("19.8 hrs lost", color=PROBLEM, font_size=24, slant="ITALIC")
-        left_tag.move_to((col_x_left, y_tag, 0))
-
-        self.play(
-            FadeIn(left_header, shift=DOWN * 0.1),
-            FadeIn(left_tag, shift=UP * 0.1),
-            run_time=0.7,
-        )
-        self.wait(0.5)
-
-        # RIGHT column
-        right_header = Text("to fix it", color=MUTED, font_size=24, slant="ITALIC")
-        right_header.move_to((col_x_right, y_header, 0))
-
-        right_big = VGroup(
-            Text("$30", color=ACCENT_3, font_size=58, weight="BOLD"),
-            Text("/ mo", color=ACCENT_3, font_size=58, weight="BOLD"),
-        ).arrange(RIGHT, buff=0.22, aligned_edge=DOWN)
-        right_big.move_to((col_x_right, y_big, 0))
-
-        coin = Circle(
-            radius=0.55,
-            color=INK,
-            fill_color=ACCENT_3,
-            fill_opacity=1.0,
+        # www-hub (legacy, left)
+        www_box = RoundedRectangle(
+            width=3.2,
+            height=1.9,
+            corner_radius=0.14,
+            color=MUTED,
             stroke_width=2.0,
+            fill_color=BG,
+            fill_opacity=1.0,
         )
-        coin_value = Text("$30", color=INK, font_size=22, weight="BOLD")
-        coin_value.move_to(coin.get_center())
-        coin_group = VGroup(coin, coin_value)
-        coin_group.move_to((col_x_right, y_visual, 0))
+        www_label = Text("www-hub", color=MUTED, font_size=22, weight="BOLD")
+        www_label.move_to(www_box.get_top() + DOWN * 0.32)
+        legacy_sub = Text("legacy", color=MUTED, font_size=14, slant="ITALIC")
+        legacy_sub.next_to(www_label, DOWN, buff=0.04)
+        www_card = VGroup(www_box, www_label, legacy_sub)
+        www_card.move_to((-3.8, 1.8, 0))
 
-        right_tag = Text("~33× ROI", color=ACCENT_3, font_size=30, weight="BOLD")
-        right_tag.move_to((col_x_right, y_tag, 0))
+        # hub-next (active, right)
+        hub_box = RoundedRectangle(
+            width=3.2,
+            height=1.9,
+            corner_radius=0.14,
+            color=INFRA,
+            stroke_width=2.0,
+            fill_color=BG,
+            fill_opacity=1.0,
+        )
+        hub_label = Text("hub-next", color=FG, font_size=22, weight="BOLD")
+        hub_label.move_to(hub_box.get_top() + DOWN * 0.32)
+        hub_card = VGroup(hub_box, hub_label)
+        hub_card.move_to((3.8, 1.8, 0))
 
+        # www-hub remaining pages: sale + profile
+        sale_tile = page_tile("sale", highlight=True)
+        profile_tile = page_tile("profile", highlight=True)
+        www_pages_row = VGroup(sale_tile, profile_tile).arrange(RIGHT, buff=0.18)
+        www_pages_row.move_to(www_box.get_center() + DOWN * 0.28)
+
+        # hub-next: 8 generic tiles, already migrated
+        hub_tiles = VGroup(*[page_tile() for _ in range(8)])
+        hub_grid_rows = VGroup()
+        for r in range(2):
+            row = VGroup(*[hub_tiles[r * 4 + c] for c in range(4)]).arrange(
+                RIGHT, buff=0.08
+            )
+            hub_grid_rows.add(row)
+        hub_grid_rows.arrange(DOWN, buff=0.08)
+        hub_grid_rows.move_to(hub_box.get_center() + DOWN * 0.22)
+
+        # 3 shared envs
+        env_names = ["staging", "unify-staging", "training"]
+        env_groups: list[VGroup] = []
+        env_boxes_only: list[RoundedRectangle] = []
+        env_labels_only: list[Text] = []
+        for name in env_names:
+            box = RoundedRectangle(
+                width=2.6,
+                height=1.0,
+                corner_radius=0.14,
+                color=INFRA,
+                stroke_width=2.2,
+                fill_color=INFRA,
+                fill_opacity=0.12,
+            )
+            lbl = Text(name, color=INFRA, font_size=18, weight="MEDIUM")
+            lbl.move_to(box.get_center())
+            env_groups.append(VGroup(box, lbl))
+            env_boxes_only.append(box)
+            env_labels_only.append(lbl)
+        envs = VGroup(*env_groups)
+        envs.arrange(RIGHT, buff=0.4)
+        envs.move_to((0, -2.6, 0))
+
+        # 6 arrows: each repo → each env
+        www_arrows = VGroup(
+            *[
+                Line(
+                    www_box.get_bottom(),
+                    eb.get_top(),
+                    color=MUTED,
+                    stroke_width=1.0,
+                )
+                for eb in env_boxes_only
+            ]
+        )
+        hub_arrows = VGroup(
+            *[
+                Line(
+                    hub_box.get_bottom(),
+                    eb.get_top(),
+                    color=MUTED,
+                    stroke_width=1.0,
+                )
+                for eb in env_boxes_only
+            ]
+        )
+
+        # Stage envs offscreen for slide-up
+        env_targets = [e.get_center().copy() for e in envs]
+        for e in envs:
+            e.shift(DOWN * 5)
+
+        self.wait(0.3)
+        self.play(
+            FadeIn(www_card, shift=DOWN * 0.15),
+            FadeIn(hub_card, shift=DOWN * 0.15),
+            run_time=0.9,
+        )
+        self.play(
+            FadeIn(www_pages_row, shift=DOWN * 0.05),
+            LaggedStart(*[FadeIn(t) for t in hub_tiles], lag_ratio=0.04),
+            run_time=1.0,
+        )
         self.play(
             LaggedStart(
-                FadeIn(right_header, shift=DOWN * 0.1),
-                FadeIn(right_big, shift=DOWN * 0.15),
-                FadeIn(coin_group, scale=0.5),
-                FadeIn(right_tag, shift=UP * 0.1),
-                lag_ratio=0.3,
+                *[
+                    cast(Animation, e.animate.move_to(env_targets[i]))
+                    for i, e in enumerate(envs)
+                ],
+                lag_ratio=0.18,
             ),
-            run_time=1.8,
+            run_time=1.4,
+        )
+        self.play(
+            LaggedStart(
+                *[Create(a) for a in [*www_arrows, *hub_arrows]],
+                lag_ratio=0.05,
+            ),
+            run_time=1.0,
+        )
+        self.wait(0.8)
+
+        # ──────────────────────────────────────────────────────────
+        # BEAT 2 — Core pages callout
+        # ──────────────────────────────────────────────────────────
+        core_label = Text(
+            "core pages remaining",
+            color=ACCENT,
+            font_size=15,
+            slant="ITALIC",
+        )
+        core_label.next_to(www_box, DOWN, buff=0.22)
+        self.play(FadeIn(core_label, shift=UP * 0.08), run_time=0.5)
+
+        # Pulse sale + profile twice
+        for _ in range(2):
+            self.play(
+                sale_tile[0].animate.set_fill(ACCENT, opacity=0.55),
+                profile_tile[0].animate.set_fill(ACCENT, opacity=0.55),
+                run_time=0.32,
+            )
+            self.play(
+                sale_tile[0].animate.set_fill(ACCENT, opacity=0.32),
+                profile_tile[0].animate.set_fill(ACCENT, opacity=0.32),
+                run_time=0.32,
+            )
+        self.wait(0.3)
+
+        # ──────────────────────────────────────────────────────────
+        # BEAT 3 — Sale and profile cross to hub-next; envs go red
+        # ──────────────────────────────────────────────────────────
+        # Land them above the existing hub grid (visually distinct)
+        target_sale = hub_box.get_center() + UP * 0.05 + LEFT * 0.55
+        target_profile = hub_box.get_center() + UP * 0.05 + RIGHT * 0.55
+
+        # Sale migrates first
+        self.play(
+            sale_tile.animate.move_to(target_sale),
+            FadeOut(core_label, shift=DOWN * 0.1),
+            run_time=1.2,
+        )
+        # Envs darken; hub arrows thicken & turn red
+        env_first_pulse: list[Animation] = []
+        for box, lbl in zip(env_boxes_only, env_labels_only):
+            env_first_pulse.append(
+                cast(Animation, box.animate.set_color(PROBLEM).set_fill(PROBLEM, opacity=0.20))
+            )
+            env_first_pulse.append(cast(Animation, lbl.animate.set_color(PROBLEM)))
+        hub_arrow_thicken: list[Animation] = [
+            cast(Animation, a.animate.set_color(PROBLEM).set_stroke(width=2.5))
+            for a in hub_arrows
+        ]
+        self.play(*env_first_pulse, *hub_arrow_thicken, run_time=0.6)
+
+        # Profile migrates
+        self.play(
+            profile_tile.animate.move_to(target_profile),
+            run_time=1.2,
+        )
+        # Envs spike harder + warning glyphs + www arrows fade
+        warning_glyphs = VGroup()
+        for eb in env_boxes_only:
+            ring = Circle(
+                radius=0.18, color=PROBLEM, stroke_width=3.0, fill_opacity=0
+            )
+            slash = Line(
+                start=(-0.13, 0.13, 0),
+                end=(0.13, -0.13, 0),
+                color=PROBLEM,
+                stroke_width=3.0,
+            )
+            wg = VGroup(ring, slash)
+            wg.next_to(eb, UP, buff=0.18)
+            warning_glyphs.add(wg)
+
+        env_second_pulse: list[Animation] = [
+            cast(Animation, b.animate.set_fill(PROBLEM, opacity=0.34).set_stroke(width=3.0))
+            for b in env_boxes_only
+        ]
+        thicker_hub_arrows: list[Animation] = [
+            cast(Animation, a.animate.set_stroke(width=3.5)) for a in hub_arrows
+        ]
+        fade_www_arrows: list[Animation] = [
+            cast(Animation, a.animate.set_stroke(opacity=0.25)) for a in www_arrows
+        ]
+        # www-hub greys out further (legacy goes silent)
+        www_card_fade = cast(Animation, www_card.animate.set_opacity(0.4))
+
+        self.play(
+            *env_second_pulse,
+            *thicker_hub_arrows,
+            *fade_www_arrows,
+            www_card_fade,
+            LaggedStart(
+                *[FadeIn(g, scale=0.6) for g in warning_glyphs],
+                lag_ratio=0.18,
+            ),
+            run_time=0.9,
         )
 
-        self.wait(5.5)
-        # Beat 3 total ≈ 0.6 + 1.0 + 0.7 + 0.5 + 1.8 + 5.5 = 10.1s
+        # ──────────────────────────────────────────────────────────
+        # BEAT 4 — Hold on the contended state
+        # ──────────────────────────────────────────────────────────
+        self.wait(2.8)
 
 
 class EE04(NormalScene):
@@ -903,22 +993,12 @@ class EE05(NormalScene):
         pr_card = VGroup(card, title, status_badge, subtitle, labels_text)
         pr_card.move_to((0, 1.4, 0))
 
-        # Phase label (top center, transforms between phases)
-        phase_label = Text(
-            "1. Open + label",
-            color=ACCENT,
-            font_size=24,
-            slant="ITALIC",
-        )
-        phase_label.move_to((0, 3.4, 0))
-
         # ──────────────────────────────────────────────────────────
-        # PHASE 1 (0–8s) — Open + label
+        # PHASE 1 — Open + label
         # ──────────────────────────────────────────────────────────
         pr_card.shift(LEFT * 14)  # off-screen-left start
 
         self.wait(0.3)
-        self.play(FadeIn(phase_label, shift=DOWN * 0.1), run_time=0.6)
         self.play(pr_card.animate.shift(RIGHT * 14), run_time=1.2)
         self.wait(0.5)
 
@@ -940,35 +1020,11 @@ class EE05(NormalScene):
         preview_chip.next_to(labels_text, RIGHT, buff=0.25)
 
         self.play(FadeIn(preview_chip, scale=0.6), run_time=0.7)
-
-        tagline = Text(
-            "Opt-in per PR — no env unless you ask.",
-            color=MUTED,
-            font_size=22,
-            slant="ITALIC",
-        )
-        tagline.move_to((0, -2.0, 0))
-
-        self.play(FadeIn(tagline, shift=UP * 0.1), run_time=1.0)
-        self.wait(3.7)
-        # Phase 1 cumulative: 0.3+0.6+1.2+0.5+0.7+1.0+3.7 = 8.0s ✓
+        self.wait(2.0)
 
         # ──────────────────────────────────────────────────────────
-        # PHASE 2 (8–16s) — Build & deploy
+        # PHASE 2 — Build & deploy
         # ──────────────────────────────────────────────────────────
-        phase_label_2 = Text(
-            "2. Build & deploy",
-            color=ACCENT,
-            font_size=24,
-            slant="ITALIC",
-        )
-        phase_label_2.move_to(phase_label.get_center())
-
-        self.play(
-            Transform(phase_label, phase_label_2),
-            FadeOut(tagline, shift=DOWN * 0.1),
-            run_time=0.7,
-        )
 
         # Build glyph: 3 horizontal short lines (code lines)
         def build_glyph() -> VGroup:
@@ -1059,21 +1115,11 @@ class EE05(NormalScene):
         )
 
         self.play(Create(infra_progress), run_time=2.5)
-        self.wait(3.4)
-        # Phase 2 cumulative: 0.7+1.4+2.5+3.4 = 8.0s ✓
+        self.wait(1.5)
 
         # ──────────────────────────────────────────────────────────
-        # PHASE 3 (16–24s) — Live URL appears
+        # PHASE 3 — Live URL appears
         # ──────────────────────────────────────────────────────────
-        phase_label_3 = Text(
-            "3. Live URL",
-            color=ACCENT,
-            font_size=24,
-            slant="ITALIC",
-        )
-        phase_label_3.move_to(phase_label.get_center())
-
-        self.play(Transform(phase_label, phase_label_3), run_time=0.5)
 
         comment_w, comment_h = 6.0, 1.4
         comment_card = RoundedRectangle(
@@ -1130,26 +1176,15 @@ class EE05(NormalScene):
 
         self.play(FadeIn(comment_group, shift=UP * 0.3), run_time=1.0)
 
-        # URL pulses (2 quick FG↔ACCENT_3 cycles)
-        for _ in range(2):
-            self.play(url_text.animate.set_color(FG), run_time=0.3)
-            self.play(url_text.animate.set_color(ACCENT_3), run_time=0.3)
+        # One pulse — twice was twee.
+        self.play(url_text.animate.set_color(FG), run_time=0.3)
+        self.play(url_text.animate.set_color(ACCENT_3), run_time=0.3)
 
-        self.wait(5.3)
-        # Phase 3 cumulative: 0.5+1.0+1.2+5.3 = 8.0s ✓
+        self.wait(3.0)
 
         # ──────────────────────────────────────────────────────────
-        # PHASE 4 (24–30s) — Merge & auto teardown
+        # PHASE 4 — Merge & auto teardown
         # ──────────────────────────────────────────────────────────
-        phase_label_4 = Text(
-            "4. Auto teardown",
-            color=ACCENT,
-            font_size=24,
-            slant="ITALIC",
-        )
-        phase_label_4.move_to(phase_label.get_center())
-
-        self.play(Transform(phase_label, phase_label_4), run_time=0.5)
 
         # Status flips Open → Merged
         merged_badge = make_badge("Merged", MERGED)
@@ -1187,19 +1222,8 @@ class EE05(NormalScene):
             run_time=0.8,
         )
 
-        # Final overlay
-        final = Text(
-            "Env destroyed automatically. No human in the loop.",
-            color=MUTED,
-            font_size=22,
-            slant="ITALIC",
-        )
-        final.move_to((0, -2.7, 0))
-
-        self.play(FadeIn(final, shift=UP * 0.1), run_time=0.8)
-        self.wait(1.7)
-        # Phase 4 cumulative: 0.5+0.8+1.4+0.8+0.8+1.7 = 6.0s ✓
-        # Total: 8 + 8 + 8 + 6 = 30.0s ✓
+        # The strikethrough is the close. Hold on it.
+        self.wait(2.5)
 
 
 # Soft warning yellow for the trigger fire flash (not in theme — single-use).
@@ -1419,12 +1443,10 @@ class EE06(NormalScene):
                 run_time=0.4,
             )
             self.wait(0.3)
-        # Per trigger: 0.5+0.4+0.2+0.3+0.4+0.3 = 2.1s. 6 triggers = 12.6s.
-        # Pad to ~16s for Beat 2.
-        self.wait(3.4)
+        self.wait(0.5)
 
         # ──────────────────────────────────────────────────────────
-        # BEAT 3 (22–30s) — Hexagon + tagline
+        # BEAT 3 — Tagline. Main only; the subtitle was over-explaining.
         # ──────────────────────────────────────────────────────────
         tagline_main = Text(
             "Six shutdown paths, running in parallel.",
@@ -1433,21 +1455,10 @@ class EE06(NormalScene):
             weight="BOLD",
             font="Helvetica",
         )
-        tagline_sub = Text(
-            "Cost stays bounded automatically — regardless of human behavior.",
-            color=MUTED,
-            font_size=20,
-            slant="ITALIC",
-            font="Helvetica",
-        )
-        tagline = VGroup(tagline_main, tagline_sub).arrange(DOWN, buff=0.16)
-        tagline.move_to((0, -3.45, 0))
+        tagline_main.move_to((0, -3.45, 0))
 
         self.play(FadeIn(tagline_main, shift=UP * 0.12), run_time=0.8)
-        self.play(FadeIn(tagline_sub, shift=UP * 0.1), run_time=0.8)
-        self.wait(6.4)
-        # Beat 3 cumulative: 0.8+0.8+6.4 = 8.0s ✓
-        # Total: 6 + 16 + 8 = 30s
+        self.wait(3.5)
 
 
 class EE07(NormalScene):
@@ -1575,15 +1586,26 @@ class EE07(NormalScene):
         label_hub_name = label("hub namespace\ntoday", color=MUTED, font_size=14)
         label_hub_name.move_to((x_hub_init, Y_BASE - 0.32, 0))
 
+        # Persistent data-source attribution — these real numbers are pulled
+        # from Kubecost; pin a small caption top-right so the audience can tell
+        # measured values from the projected scenarios in Beat 4.
+        source_caption = label(
+            "Source: Kubecost — hub staging, April 2026",
+            color=MUTED,
+            font_size=12,
+            slant="ITALIC",
+        )
+        source_caption.move_to((6.55 - source_caption.width / 2, 3.75, 0))
+
         self.play(
             FadeIn(label_total, shift=DOWN * 0.1),
             FadeIn(label_idle, shift=LEFT * 0.1),
             FadeIn(label_active, shift=LEFT * 0.1),
+            FadeIn(source_caption),
             run_time=0.8,
         )
         self.play(FadeIn(label_hub_name, shift=UP * 0.05), run_time=0.5)
-        self.wait(5.3)
-        # Beat 1 cumulative: 0.3 + 2.0 + 0.4 + 0.7 + 0.8 + 0.5 + 5.3 = 10.0s ✓
+        self.wait(2.5)
 
         # ──────────────────────────────────────────────────────────
         # BEAT 2 (10–18s) — Set the threshold first
@@ -1605,19 +1627,9 @@ class EE07(NormalScene):
         threshold_label.next_to(dashed.get_end(), UP, buff=0.1)
         threshold_label.shift(LEFT * 1.5)  # nudge inward
 
-        annotation = label(
-            "This is what we already throw away every month.",
-            color=MUTED,
-            font_size=18,
-            slant="ITALIC",
-        )
-        annotation.move_to((0, -3.55, 0))
-
         self.play(Create(dashed), run_time=1.5)
         self.play(FadeIn(threshold_label, shift=DOWN * 0.1), run_time=0.7)
-        self.play(FadeIn(annotation, shift=UP * 0.08), run_time=0.7)
-        self.wait(5.1)
-        # Beat 2 cumulative: 1.5 + 0.7 + 0.7 + 5.1 = 8.0s ✓
+        self.wait(2.5)
 
         # ──────────────────────────────────────────────────────────
         # BEAT 3 (18–25s) — Zooming into FE
@@ -1630,7 +1642,6 @@ class EE07(NormalScene):
             hub_movables.animate.shift(RIGHT * hub_shift),
             FadeOut(label_idle, shift=LEFT * 0.2),
             FadeOut(label_active, shift=LEFT * 0.2),
-            FadeOut(annotation, shift=DOWN * 0.1),
             run_time=1.0,
         )
 
@@ -1680,10 +1691,7 @@ class EE07(NormalScene):
             run_time=0.6,
         )
         self.play(FadeIn(fe_breakdown, shift=LEFT * 0.1), run_time=0.6)
-        self.wait(2.6)
-        # Beat 3 cumulative: 1.0 + 1.2 + 0.6 + 0.6 + 2.6 = 6.0s — pad below to hit 7s
-        self.wait(1.0)
-        # Beat 3 ≈ 7s ✓
+        self.wait(2.0)
 
         # ──────────────────────────────────────────────────────────
         # BEAT 4 (25–40s) — Four ephemeral env scenarios
@@ -1694,6 +1702,18 @@ class EE07(NormalScene):
             (x_heavy, h_heavy, "Heavy", "30 envs/mo", "$20–30"),
             (x_worst, h_worst, "Worst case", "no shutdown", "$120–160"),
         ]
+
+        # Caveat that distinguishes the Kubecost-measured bars (left) from the
+        # modeled scenarios (these four). Sits above the EE cluster and stays
+        # for the rest of the scene.
+        projected_caveat = label(
+            "* projected — assumed env lifecycle × FE per-env cost",
+            color=MUTED,
+            font_size=12,
+            slant="ITALIC",
+        )
+        projected_caveat.move_to(((x_cons + x_worst) / 2, Y_BASE + h_worst + 0.7, 0))
+        self.play(FadeIn(projected_caveat, shift=DOWN * 0.05), run_time=0.5)
 
         for i, (x, h, name, sub, money) in enumerate(ee_specs):
             # Use ACCENT_3 (green = solution) for normal cases, but the worst case stays under threshold
@@ -1719,9 +1739,8 @@ class EE07(NormalScene):
                 run_time=1.2,
             )
             self.wait(0.4)
-        # 4 × 1.6s = 6.4s for bars
-        # Pad to 15s for Beat 4
-        self.wait(8.6)
+        # The bars-vs-threshold geometry is the argument. Hold briefly, then kicker.
+        self.wait(2.0)
 
         # ──────────────────────────────────────────────────────────
         # BEAT 5 (40–45s) — The kicker
@@ -1756,51 +1775,74 @@ class EE08(NormalScene):
         def label(text: str, **kwargs) -> Text:
             return Text(text, font=FONT, **kwargs)
 
-        def make_pill(text: str) -> VGroup:
-            t = label(text, color=ACCENT_3, font_size=22, weight="MEDIUM")
-            pill = RoundedRectangle(
-                width=t.width + 0.7,
-                height=t.height + 0.42,
-                corner_radius=0.22,
+        # Mirror of EE01 — 18 engineers, each paired 1:1 with their own env.
+        # Same camera framing as EE01, no contention, no warnings.
+        def engineer(tag: str) -> VGroup:
+            c = Circle(
+                radius=0.20,
+                color=INK,
+                fill_color=CREAM,
+                fill_opacity=1.0,
+                stroke_width=1.5,
+            )
+            t = Text(tag, color=INK, font_size=15, weight="BOLD", font=FONT)
+            t.move_to(c.get_center())
+            return VGroup(c, t)
+
+        fe_group = VGroup(*[engineer("FE") for _ in range(6)]).arrange(RIGHT, buff=0.22)
+        be_group = VGroup(*[engineer("BE") for _ in range(7)]).arrange(RIGHT, buff=0.22)
+        qa_group = VGroup(*[engineer("QA") for _ in range(5)]).arrange(RIGHT, buff=0.22)
+        team_row = VGroup(fe_group, be_group, qa_group).arrange(RIGHT, buff=0.85)
+        team_row.move_to((0, 1.6, 0))
+
+        all_eng = [*fe_group, *be_group, *qa_group]
+
+        envs = VGroup()
+        for eng in all_eng:
+            env = RoundedRectangle(
+                width=0.42,
+                height=0.36,
+                corner_radius=0.08,
                 color=ACCENT_3,
                 stroke_width=1.8,
                 fill_color=ACCENT_3,
-                fill_opacity=0.10,
+                fill_opacity=0.18,
             )
-            t.move_to(pill.get_center())
-            return VGroup(pill, t)
+            env.move_to((eng[0].get_center()[0], -1.5, 0))
+            envs.add(env)
 
-        # ──────────────────────────────────────────────────────────
-        # BEAT 1 (0–8s) — Four mechanism pills fade in
-        # ──────────────────────────────────────────────────────────
-        words = [
-            "No queue",
-            "No coordination tax",
-            "Parallel testing",
-            "No back-and-forth on big features",
-        ]
-        pills = [make_pill(w) for w in words]
-
-        top_row = VGroup(pills[0], pills[1]).arrange(RIGHT, buff=0.5)
-        top_row.move_to((0, 0.85, 0))
-
-        bot_row = VGroup(pills[2], pills[3]).arrange(RIGHT, buff=0.5)
-        bot_row.move_to((0, -0.45, 0))
+        lines = VGroup()
+        for eng, env in zip(all_eng, envs):
+            ln = Line(
+                eng[0].get_bottom(),
+                env.get_top(),
+                color=ACCENT_3,
+                stroke_width=1.5,
+            )
+            lines.add(ln)
 
         self.wait(0.3)
         self.play(
             LaggedStart(
-                *[FadeIn(p, shift=UP * 0.15, scale=0.85) for p in pills],
-                lag_ratio=0.32,
+                *[FadeIn(eng, shift=DOWN * 0.18) for eng in all_eng],
+                lag_ratio=0.045,
             ),
-            run_time=5.5,
+            run_time=2.0,
         )
-        self.wait(2.2)
-        # Beat 1 cumulative: 0.3 + 5.5 + 2.2 = 8.0s ✓
+        self.play(
+            LaggedStart(
+                *[FadeIn(env, shift=UP * 0.18) for env in envs],
+                lag_ratio=0.045,
+            ),
+            run_time=2.0,
+        )
+        self.play(
+            LaggedStart(*[Create(ln) for ln in lines], lag_ratio=0.04),
+            run_time=1.5,
+        )
+        self.wait(1.5)
 
-        # ──────────────────────────────────────────────────────────
-        # BEAT 2 (8–15s) — Summary
-        # ──────────────────────────────────────────────────────────
+        # Stats land. The italic subtitle is cut — the picture is the argument.
         summary_main = label(
             "~19.8 hrs/week recovered.    ~$1000/mo back.",
             color=FG,
@@ -1808,21 +1850,10 @@ class EE08(NormalScene):
             weight="BOLD",
             t2c={"19.8": ACCENT_3, "$1000": ACCENT_3},
         )
-        summary_main.move_to((0, -2.05, 0))
-
-        summary_sub = label(
-            "QA tests in parallel now — and the whole team moves faster.",
-            color=MUTED,
-            font_size=20,
-            slant="ITALIC",
-        )
-        summary_sub.move_to((0, -2.85, 0))
+        summary_main.move_to((0, -3.0, 0))
 
         self.play(FadeIn(summary_main, shift=UP * 0.12), run_time=1.0)
-        self.play(FadeIn(summary_sub, shift=UP * 0.08), run_time=0.8)
-        self.wait(5.2)
-        # Beat 2 cumulative: 1.0 + 0.8 + 5.2 = 7.0s ✓
-        # Total: 8 + 7 = 15.0s ✓
+        self.wait(3.0)
 
 
 class EEFull(NormalScene):
@@ -1833,7 +1864,16 @@ class EEFull(NormalScene):
     # opening FadeIn completes the soft cross-dissolve.
     def construct(self) -> None:
         beats: list[type[NormalScene]] = [
-            EE00, EE01, EE02, EE03, EE04, EE05, EE06, EE07, EE08,
+            EE00,
+            EE01,
+            EE02,
+            EE03,
+            EE03B,
+            EE04,
+            EE05,
+            EE06,
+            EE07,
+            EE08,
         ]
         for i, scene_cls in enumerate(beats):
             scene_cls.construct(self)  # type: ignore[arg-type]
