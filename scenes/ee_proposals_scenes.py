@@ -23,11 +23,22 @@ from manim import (
     Polygon,
     Rectangle,
     RoundedRectangle,
-    Text,
+)
+from manim import Text as _ManimText
+from manim import (
     Transform,
     VGroup,
     Write,
 )
+
+
+# Pango's default font fallback on this system rasterizes small Text with
+# broken kerning (visible as letter-spacing gaps in EE02 bubbles, EE05 PR
+# card, etc.). Force Helvetica — the same font EE06–EE08 already pass
+# explicitly and render correctly.
+def Text(*args, **kwargs):
+    kwargs.setdefault("font", "Helvetica")
+    return _ManimText(*args, **kwargs)
 from theme import (
     ACCENT,
     ACCENT_3,
@@ -398,8 +409,10 @@ class EE02(NormalScene):
             "deploying after lunch — heads up",
             "is unify-staging free yet?",
         ]
-        # Roughly ringed positions around the engineer (angle°, radius)
-        ring = [(60, 2.0), (135, 2.3), (210, 1.9), (290, 2.4), (350, 2.0)]
+        # Roughly ringed positions around the engineer (angle°, radius).
+        # Radii sized so the longest messages don't collide with each other or
+        # with the central engineer circle.
+        ring = [(60, 2.8), (135, 3.2), (210, 2.8), (290, 2.7), (350, 2.5)]
         rotations = [0.04, -0.03, 0.05, -0.04, 0.02]  # radians
 
         bubbles = VGroup()
@@ -491,11 +504,11 @@ class EE02(NormalScene):
         self.wait(1.6)
 
         big_number = Text(
-            "~19.5 engineering hours/week",
+            "~19.8 engineering hours/week",
             color=FG,
             font_size=58,
             weight="BOLD",
-            t2c={"19.5": ACCENT},
+            t2c={"19.8": ACCENT},
         )
         big_number.move_to(ORIGIN + UP * 0.35)
 
@@ -522,7 +535,7 @@ class EE03(NormalScene):
         # ──────────────────────────────────────────────────────────
         seg_w, seg_h, gap = 0.27, 0.62, 0.02
         n_segs = 40
-        red_count = 20  # 19.5 hrs ≈ 20 segments
+        red_count = 20  # 19.8 hrs ≈ 20 segments
 
         bar_segs: list[Rectangle] = [
             Rectangle(
@@ -592,14 +605,14 @@ class EE03(NormalScene):
         )
         self.play(Transform(counter, make_counter("9 hrs lost")), run_time=0.3)
 
-        # Phase 4 — fast: +11 segments (≈19.5 hrs total)
+        # Phase 4 — fast: +11 segments (≈19.8 hrs total)
         self.play(
             LaggedStart(
                 *[fill_red(bar_segs[i]) for i in range(9, red_count)], lag_ratio=0.07
             ),
             run_time=1.5,
         )
-        self.play(Transform(counter, make_counter("19.5 hrs lost")), run_time=0.3)
+        self.play(Transform(counter, make_counter("19.8 hrs lost")), run_time=0.3)
         self.wait(0.3)
         # Cumulative ≈ 0.3+0.8+0.4+1.5+0.3+0.5+0.3+1.5+0.3+1.5+0.3+0.3 = 8.0 ✓
 
@@ -648,7 +661,7 @@ class EE03(NormalScene):
 
         # $ counter climbs on the RIGHT, beside the pile
         money_y = 1.0
-        money_states = ["$0", "$200", "$450", "$650", "$780"]
+        money_states = ["$0", "$250", "$550", "$800", "$1000"]
         money = Text(money_states[0], color=PROBLEM, font_size=68, weight="BOLD")
         money.move_to((col_x_right, money_y, 0))
 
@@ -658,9 +671,9 @@ class EE03(NormalScene):
             new_money.move_to(money.get_center())
             self.play(Transform(money, new_money), run_time=0.32)
 
-        # Expand to "~$780 / month"
+        # Expand to "~$1000 / month"
         money_full = VGroup(
-            Text("~$780", color=PROBLEM, font_size=68, weight="BOLD"),
+            Text("~$1000", color=PROBLEM, font_size=68, weight="BOLD"),
             Text("/ month", color=MUTED, font_size=40, weight="MEDIUM"),
         ).arrange(RIGHT, buff=0.22, aligned_edge=DOWN)
         money_full.move_to((col_x_right, money_y, 0))
@@ -677,7 +690,7 @@ class EE03(NormalScene):
         sub.set_x(col_x_right)
 
         calc = Text(
-            "13 engineers × 1.5 hrs/week × $10/hr × 4 weeks",
+            "19.8 hrs/week × ~$12/hr × 4 weeks",
             color=MUTED,
             font_size=22,
         )
@@ -691,7 +704,7 @@ class EE03(NormalScene):
         # ──────────────────────────────────────────────────────────
         # BEAT 3 (18–30s) — Parallel two-column comparison
         # Pile is already at the left anchor from Beat 2; here we just
-        # clear sub/calc, slide $780 from the right column to over-pile,
+        # clear sub/calc, slide $1000 from the right column to over-pile,
         # and add the right column.
         # ──────────────────────────────────────────────────────────
         col_x_right = 3.6  # Beat 2 used 3.0 for money; tighten alignment now
@@ -706,9 +719,9 @@ class EE03(NormalScene):
             run_time=0.6,
         )
 
-        # Transform money "~$780 / month" → over-pile "$780 / mo"
+        # Transform money "~$1000 / month" → over-pile "$1000 / mo"
         left_big = VGroup(
-            Text("$780", color=PROBLEM, font_size=58, weight="BOLD"),
+            Text("$1000", color=PROBLEM, font_size=58, weight="BOLD"),
             Text("/ mo", color=PROBLEM, font_size=58, weight="BOLD"),
         ).arrange(RIGHT, buff=0.22, aligned_edge=DOWN)
         left_big.move_to((col_x_left, y_big, 0))
@@ -719,7 +732,7 @@ class EE03(NormalScene):
         left_header = Text("today's cost", color=MUTED, font_size=24, slant="ITALIC")
         left_header.move_to((col_x_left, y_header, 0))
 
-        left_tag = Text("19.5 hrs lost", color=PROBLEM, font_size=24, slant="ITALIC")
+        left_tag = Text("19.8 hrs lost", color=PROBLEM, font_size=24, slant="ITALIC")
         left_tag.move_to((col_x_left, y_tag, 0))
 
         self.play(
@@ -734,7 +747,7 @@ class EE03(NormalScene):
         right_header.move_to((col_x_right, y_header, 0))
 
         right_big = VGroup(
-            Text("$160", color=ACCENT_3, font_size=58, weight="BOLD"),
+            Text("$30", color=ACCENT_3, font_size=58, weight="BOLD"),
             Text("/ mo", color=ACCENT_3, font_size=58, weight="BOLD"),
         ).arrange(RIGHT, buff=0.22, aligned_edge=DOWN)
         right_big.move_to((col_x_right, y_big, 0))
@@ -746,12 +759,12 @@ class EE03(NormalScene):
             fill_opacity=1.0,
             stroke_width=2.0,
         )
-        coin_value = Text("$160", color=INK, font_size=22, weight="BOLD")
+        coin_value = Text("$30", color=INK, font_size=22, weight="BOLD")
         coin_value.move_to(coin.get_center())
         coin_group = VGroup(coin, coin_value)
         coin_group.move_to((col_x_right, y_visual, 0))
 
-        right_tag = Text("5× ROI", color=ACCENT_3, font_size=30, weight="BOLD")
+        right_tag = Text("~33× ROI", color=ACCENT_3, font_size=30, weight="BOLD")
         right_tag.move_to((col_x_right, y_tag, 0))
 
         self.play(
@@ -923,7 +936,7 @@ class EE05(NormalScene):
             t.move_to(pill.get_center())
             return VGroup(pill, t)
 
-        preview_chip = make_chip("preview", ACCENT_3)
+        preview_chip = make_chip("preview", PROBLEM)
         preview_chip.next_to(labels_text, RIGHT, buff=0.25)
 
         self.play(FadeIn(preview_chip, scale=0.6), run_time=0.7)
@@ -1789,16 +1802,16 @@ class EE08(NormalScene):
         # BEAT 2 (8–15s) — Summary
         # ──────────────────────────────────────────────────────────
         summary_main = label(
-            "~19.5 hrs/week recovered.    ~$780/mo back.",
+            "~19.8 hrs/week recovered.    ~$1000/mo back.",
             color=FG,
             font_size=30,
             weight="BOLD",
-            t2c={"19.5": ACCENT_3, "$780": ACCENT_3},
+            t2c={"19.8": ACCENT_3, "$1000": ACCENT_3},
         )
         summary_main.move_to((0, -2.05, 0))
 
         summary_sub = label(
-            "QA capacity unchanged — but the queue is gone.",
+            "QA tests in parallel now — and the whole team moves faster.",
             color=MUTED,
             font_size=20,
             slant="ITALIC",
@@ -1810,3 +1823,26 @@ class EE08(NormalScene):
         self.wait(5.2)
         # Beat 2 cumulative: 1.0 + 0.8 + 5.2 = 7.0s ✓
         # Total: 8 + 7 = 15.0s ✓
+
+
+class EEFull(NormalScene):
+    # Plays every EE beat in sequence as a single ~3-min video. Each scene's
+    # construct body only uses inherited Scene methods (self.play/wait/add),
+    # so calling EEnn.construct(self) on this scene reuses each beat verbatim.
+    # Between beats we fade any residue and hold briefly — the next beat's
+    # opening FadeIn completes the soft cross-dissolve.
+    def construct(self) -> None:
+        beats: list[type[NormalScene]] = [
+            EE00, EE01, EE02, EE03, EE04, EE05, EE06, EE07, EE08,
+        ]
+        for i, scene_cls in enumerate(beats):
+            scene_cls.construct(self)  # type: ignore[arg-type]
+            if i < len(beats) - 1:
+                self._between_beats()
+
+    def _between_beats(self, fade: float = 0.6, hold: float = 0.2) -> None:
+        # Per-mobject FadeOut (not VGroup-wrapped) — some scenes leave
+        # non-VMobject items on stage which VGroup rejects.
+        if self.mobjects:
+            self.play(*[FadeOut(m) for m in self.mobjects], run_time=fade)
+        self.wait(hold)
