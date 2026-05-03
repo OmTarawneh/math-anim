@@ -28,17 +28,6 @@ from manim import (
     Write,
 )
 from manim import Text as _ManimText
-
-
-# Pango's default font fallback on this system rasterizes small Text with
-# broken kerning (visible as letter-spacing gaps in EE02 bubbles, EE05 PR
-# card, etc.). Force Helvetica — the same font EE06–EE08 already pass
-# explicitly and render correctly.
-def Text(*args, **kwargs):
-    kwargs.setdefault("font", "Helvetica")
-    return _ManimText(*args, **kwargs)
-
-
 from theme import (
     ACCENT,
     ACCENT_3,
@@ -52,6 +41,15 @@ from theme import (
     MUTED,
     PROBLEM,
 )
+
+
+# Helvetica and Arial on macOS both trigger a ManimPango bug that halves
+# the space advance after narrow glyph clusters ("Pls don'tdeploy",
+# "at3pm"). Helvetica Neue does not — its space ratio measures ~0.96
+# vs ~0.48 for Helvetica/Arial — and visually it is the closest cousin.
+def Text(*args, **kwargs):
+    kwargs.setdefault("font", "Helvetica Neue")
+    return _ManimText(*args, **kwargs)
 
 
 class EE00(NormalScene):
@@ -545,7 +543,7 @@ class EE03(NormalScene):
         counter = Text("0 hrs lost", color=PROBLEM, font_size=44, weight="BOLD")
         counter.move_to((col_x_right, 2.4, 0))
 
-        def make_counter(text: str) -> Text:
+        def make_counter(text: str):
             t = Text(text, color=PROBLEM, font_size=44, weight="BOLD")
             t.move_to(counter.get_center())
             return t
@@ -811,7 +809,10 @@ class EE03B(NormalScene):
         env_first_pulse: list[Animation] = []
         for box, lbl in zip(env_boxes_only, env_labels_only):
             env_first_pulse.append(
-                cast(Animation, box.animate.set_color(PROBLEM).set_fill(PROBLEM, opacity=0.20))
+                cast(
+                    Animation,
+                    box.animate.set_color(PROBLEM).set_fill(PROBLEM, opacity=0.20),
+                )
             )
             env_first_pulse.append(cast(Animation, lbl.animate.set_color(PROBLEM)))
         hub_arrow_thicken: list[Animation] = [
@@ -828,9 +829,7 @@ class EE03B(NormalScene):
         # Envs spike harder + warning glyphs + www arrows fade
         warning_glyphs = VGroup()
         for eb in env_boxes_only:
-            ring = Circle(
-                radius=0.18, color=PROBLEM, stroke_width=3.0, fill_opacity=0
-            )
+            ring = Circle(radius=0.18, color=PROBLEM, stroke_width=3.0, fill_opacity=0)
             slash = Line(
                 start=(-0.13, 0.13, 0),
                 end=(0.13, -0.13, 0),
@@ -842,7 +841,10 @@ class EE03B(NormalScene):
             warning_glyphs.add(wg)
 
         env_second_pulse: list[Animation] = [
-            cast(Animation, b.animate.set_fill(PROBLEM, opacity=0.34).set_stroke(width=3.0))
+            cast(
+                Animation,
+                b.animate.set_fill(PROBLEM, opacity=0.34).set_stroke(width=3.0),
+            )
             for b in env_boxes_only
         ]
         thicker_hub_arrows: list[Animation] = [
@@ -1509,7 +1511,7 @@ class EE07(NormalScene):
             r.move_to((x, Y_BASE + y_offset + height / 2, 0))
             return r
 
-        def label(text: str, **kwargs) -> Text:
+        def label(text: str, **kwargs):
             return Text(text, font=FONT, **kwargs)
 
         # X positions (Beat 3 onward)
@@ -1768,11 +1770,356 @@ class EE07(NormalScene):
         # Total: 10 + 8 + 7 + 15 + 5 = 45s ✓
 
 
+class EE07B(NormalScene):
+    # Answers manager Q: "How often will the team use this?" and plants the
+    # $0-if-unused floor as the bounded downside. Sits between EE07's cost
+    # bars and EE08's resolution beat.
+    def construct(self) -> None:
+        FONT = "Helvetica"
+
+        def label(text: str, **kwargs):
+            return Text(text, font=FONT, **kwargs)
+
+        # ──────────────────────────────────────────────────────────
+        # Title + subtitle
+        # ──────────────────────────────────────────────────────────
+        title = label(
+            "On-demand. Pay only for what we ship.",
+            color=FG,
+            font_size=36,
+            weight="BOLD",
+            t2c={"On-demand": ACCENT_3, "what we ship": ACCENT_3},
+        )
+        title.move_to((0, 3.45, 0))
+
+        subtitle = label(
+            "Usage scales with team velocity. Cost scales with usage.",
+            color=MUTED,
+            font_size=20,
+            slant="ITALIC",
+        )
+        subtitle.move_to((0, 2.85, 0))
+
+        self.wait(0.3)
+        self.play(FadeIn(title, shift=DOWN * 0.1), run_time=0.7)
+        self.play(FadeIn(subtitle, shift=UP * 0.05), run_time=0.5)
+
+        # ──────────────────────────────────────────────────────────
+        # Inputs row — ~10 PRs/week (matches EE07 "Realistic" FE scenario)
+        # ──────────────────────────────────────────────────────────
+        inputs_label = label(
+            "~10 PRs / week",
+            color=FG,
+            font_size=18,
+            weight="MEDIUM",
+        )
+        inputs_label.move_to((0, 1.95, 0))
+
+        def pr_glyph() -> VGroup:
+            box = RoundedRectangle(
+                width=0.55,
+                height=0.42,
+                corner_radius=0.08,
+                color=ACCENT,
+                stroke_width=1.5,
+                fill_color=ACCENT,
+                fill_opacity=0.10,
+            )
+            dot = Circle(
+                radius=0.05,
+                color=ACCENT,
+                fill_color=ACCENT,
+                fill_opacity=1.0,
+                stroke_width=0,
+            )
+            dot.move_to(box.get_left() + RIGHT * 0.13)
+            bar = Line(
+                box.get_left() + RIGHT * 0.24,
+                box.get_left() + RIGHT * 0.45,
+                color=ACCENT,
+                stroke_width=2.0,
+            )
+            return VGroup(box, dot, bar)
+
+        pr_row = VGroup(*[pr_glyph() for _ in range(10)]).arrange(RIGHT, buff=0.18)
+        pr_row.move_to((0, 1.45, 0))
+
+        self.play(FadeIn(inputs_label, shift=DOWN * 0.05), run_time=0.4)
+        self.play(
+            LaggedStart(
+                *[FadeIn(g, scale=0.6) for g in pr_row],
+                lag_ratio=0.06,
+            ),
+            run_time=1.2,
+        )
+
+        # ──────────────────────────────────────────────────────────
+        # Arrow 1 — PR → env
+        # ──────────────────────────────────────────────────────────
+        arrow1 = Line((0, 1.05, 0), (0, 0.65, 0), color=MUTED, stroke_width=1.6)
+        arrow1_head = Polygon(
+            (-0.09, 0.72, 0),
+            (0.09, 0.72, 0),
+            (0, 0.55, 0),
+            color=MUTED,
+            stroke_width=0,
+            fill_color=MUTED,
+            fill_opacity=1.0,
+        )
+        arrow1_caption = label(
+            "each PR spins one ephemeral env",
+            color=MUTED,
+            font_size=14,
+        )
+        arrow1_caption.move_to((2.8, 0.85, 0))
+
+        self.play(
+            Create(arrow1),
+            FadeIn(arrow1_head),
+            FadeIn(arrow1_caption, shift=LEFT * 0.1),
+            run_time=0.6,
+        )
+
+        # ──────────────────────────────────────────────────────────
+        # Outputs row — 10 env boxes (mirror PR count)
+        # ──────────────────────────────────────────────────────────
+        env_row = VGroup(
+            *[
+                RoundedRectangle(
+                    width=0.55,
+                    height=0.42,
+                    corner_radius=0.10,
+                    color=ACCENT_3,
+                    stroke_width=1.8,
+                    fill_color=ACCENT_3,
+                    fill_opacity=0.22,
+                )
+                for _ in range(10)
+            ]
+        ).arrange(RIGHT, buff=0.18)
+        env_row.move_to((0, 0.25, 0))
+
+        self.play(
+            LaggedStart(
+                *[FadeIn(g, scale=0.6) for g in env_row],
+                lag_ratio=0.06,
+            ),
+            run_time=1.2,
+        )
+
+        # ──────────────────────────────────────────────────────────
+        # Arrow 2 — env → cost. Callback to EE06's 6 triggers.
+        # ──────────────────────────────────────────────────────────
+        arrow2 = Line((0, -0.18, 0), (0, -0.58, 0), color=MUTED, stroke_width=1.6)
+        arrow2_head = Polygon(
+            (-0.09, -0.50, 0),
+            (0.09, -0.50, 0),
+            (0, -0.68, 0),
+            color=MUTED,
+            stroke_width=0,
+            fill_color=MUTED,
+            fill_opacity=1.0,
+        )
+        arrow2_caption = label(
+            "auto-teardown · 6 triggers (see EE06)",
+            color=MUTED,
+            font_size=14,
+        )
+        arrow2_caption.move_to((2.8, -0.38, 0))
+
+        self.play(
+            Create(arrow2),
+            FadeIn(arrow2_head),
+            FadeIn(arrow2_caption, shift=LEFT * 0.1),
+            run_time=0.6,
+        )
+
+        # ──────────────────────────────────────────────────────────
+        # Cost counter + floor/ceiling annotations.
+        # The counter ramps $0 → ~$10 with floor caption pinned at the start
+        # and ceiling caption appearing once it lands.
+        # ──────────────────────────────────────────────────────────
+        cost_caption = label("Cost / month", color=MUTED, font_size=16)
+        cost_caption.move_to((0, -1.0, 0))
+
+        spend = label("$0", color=FG, font_size=56, weight="BOLD")
+        spend.move_to((0, -1.85, 0))
+
+        self.play(
+            FadeIn(cost_caption, shift=UP * 0.05),
+            FadeIn(spend, shift=UP * 0.15),
+            run_time=0.5,
+        )
+
+        floor_head = label("Floor: $0", color=ACCENT, font_size=28, weight="BOLD")
+        floor_sub = label(
+            "no PRs open → nothing runs → nothing bills",
+            color=MUTED,
+            font_size=12,
+        )
+        floor_block = VGroup(floor_head, floor_sub).arrange(
+            DOWN, buff=0.14, aligned_edge=LEFT
+        )
+        floor_block.move_to((-4.2, -1.85, 0))
+
+        self.play(FadeIn(floor_block, shift=RIGHT * 0.15), run_time=0.6)
+        self.wait(0.6)
+
+        # Counter ramps so the audience sees usage drive the spend.
+        for s, color in [("$3", FG), ("$6", FG), ("~$10", ACCENT_3)]:
+            new_spend = label(s, color=color, font_size=56, weight="BOLD")
+            new_spend.move_to(spend.get_center())
+            self.play(Transform(spend, new_spend), run_time=0.32)
+
+        ceiling_head = label(
+            "Realistic ceiling", color=ACCENT_3, font_size=20, weight="MEDIUM"
+        )
+        ceiling_amount = label(
+            "~$10 / month  (FE)", color=ACCENT_3, font_size=18, weight="BOLD"
+        )
+        ceiling_source = label(
+            "Source: EE07 · Kubecost Apr 2026",
+            color=MUTED,
+            font_size=11,
+            slant="ITALIC",
+        )
+        ceiling_block = VGroup(
+            ceiling_head, ceiling_amount, ceiling_source
+        ).arrange(DOWN, buff=0.10, aligned_edge=LEFT)
+        ceiling_block.move_to((4.0, -1.85, 0))
+
+        self.play(FadeIn(ceiling_block, shift=LEFT * 0.15), run_time=0.6)
+        self.wait(1.2)
+
+        # ──────────────────────────────────────────────────────────
+        # Bottom strap
+        # ──────────────────────────────────────────────────────────
+        strap = label(
+            "Pay-per-use. The downside is bounded.",
+            color=FG,
+            font_size=22,
+            weight="BOLD",
+            t2c={"Pay-per-use": ACCENT_3, "bounded": ACCENT_3},
+        )
+        strap.move_to((0, -3.55, 0))
+
+        self.play(FadeIn(strap, shift=UP * 0.1), run_time=0.7)
+        self.wait(2.5)
+
+
+class EE07C(NormalScene):
+    # Answers manager Q: "How will this improve velocity / delivery?"
+    # 19.8 hrs/week recovered (from EE02–EE03) is the springboard; this scene
+    # translates it into shipping outcomes that lead into EE08's resolution.
+    def construct(self) -> None:
+        FONT = "Helvetica"
+
+        def label(text: str, **kwargs):
+            return Text(text, font=FONT, **kwargs)
+
+        # 3-lane glyph for "Independent deploys" — three parallel channels.
+        def channels_glyph() -> VGroup:
+            g = VGroup()
+            for dy in (0.18, 0.0, -0.18):
+                g.add(
+                    Line(
+                        (-0.20, dy, 0),
+                        (0.20, dy, 0),
+                        color=FG,
+                        stroke_width=2.0,
+                    )
+                )
+                g.add(Dot(point=(-0.20, dy, 0), radius=0.04, color=FG))
+            return g
+
+        # ──────────────────────────────────────────────────────────
+        # Title + subtitle
+        # ──────────────────────────────────────────────────────────
+        title = label(
+            "What 19.8 hrs/week buys us",
+            color=FG,
+            font_size=36,
+            weight="BOLD",
+            t2c={"19.8 hrs/week": ACCENT_3},
+        )
+        title.move_to((0, 3.45, 0))
+
+        subtitle = label(
+            "Hours reclaimed → velocity unlocked.",
+            color=MUTED,
+            font_size=20,
+            slant="ITALIC",
+        )
+        subtitle.move_to((0, 2.85, 0))
+
+        self.wait(0.3)
+        self.play(FadeIn(title, shift=DOWN * 0.1), run_time=0.7)
+        self.play(FadeIn(subtitle, shift=UP * 0.05), run_time=0.5)
+
+        # ──────────────────────────────────────────────────────────
+        # 2×2 card grid using EE06's _make_trigger pattern, wrapped in
+        # a soft ACCENT_3 card to match EE05's PR-card aesthetic.
+        # ──────────────────────────────────────────────────────────
+        cards_spec = [
+            (_merge_glyph, "Parallel PR reviews",
+             "Every PR gets its own env. No queue."),
+            (_hourglass_glyph, "Faster QA cycles",
+             "Env live the moment a PR opens."),
+            (channels_glyph, "Independent deploys",
+             "FE / BE / QA ship without a shared env."),
+            (_idle_glyph, "Risk-free experiments",
+             "Spikes & demos auto-vanish on merge."),
+        ]
+
+        def make_card(glyph_fn, title_text: str, sub_text: str) -> VGroup:
+            inner = _make_trigger(glyph_fn(), title_text, sub_text)
+            card = RoundedRectangle(
+                width=5.4,
+                height=1.9,
+                corner_radius=0.18,
+                color=ACCENT_3,
+                stroke_width=1.5,
+                fill_color=ACCENT_3,
+                fill_opacity=0.06,
+            )
+            inner.move_to(card.get_center())
+            return VGroup(card, inner)
+
+        cards = [make_card(g, t, s) for g, t, s in cards_spec]
+        positions = [(-2.85, 1.1), (2.85, 1.1), (-2.85, -1.05), (2.85, -1.05)]
+        for c, (x, y) in zip(cards, positions):
+            c.move_to((x, y, 0))
+
+        self.play(
+            LaggedStart(
+                *[FadeIn(c, shift=UP * 0.15) for c in cards],
+                lag_ratio=0.20,
+            ),
+            run_time=2.0,
+        )
+        self.wait(3.0)
+
+        # ──────────────────────────────────────────────────────────
+        # Bottom strap — echoes into EE08's tag-line for continuity.
+        # ──────────────────────────────────────────────────────────
+        strap = label(
+            "More PRs shipped · Less coordination · Migration unblocked",
+            color=FG,
+            font_size=22,
+            weight="BOLD",
+            t2c={"More PRs shipped": ACCENT_3, "Migration unblocked": ACCENT_3},
+        )
+        strap.move_to((0, -3.55, 0))
+
+        self.play(FadeIn(strap, shift=UP * 0.1), run_time=0.8)
+        self.wait(2.5)
+
+
 class EE08(NormalScene):
     def construct(self) -> None:
         FONT = "Helvetica"
 
-        def label(text: str, **kwargs) -> Text:
+        def label(text: str, **kwargs):
             return Text(text, font=FONT, **kwargs)
 
         # Mirror of EE01 — 18 engineers, each paired 1:1 with their own env.
@@ -1852,8 +2199,16 @@ class EE08(NormalScene):
         )
         summary_main.move_to((0, -3.0, 0))
 
+        velocity_tag = label(
+            "More PRs shipped · No env collisions · Migration unblocked",
+            color=MUTED,
+            font_size=16,
+        )
+        velocity_tag.move_to((0, -3.55, 0))
+
         self.play(FadeIn(summary_main, shift=UP * 0.12), run_time=1.0)
-        self.wait(3.0)
+        self.play(FadeIn(velocity_tag, shift=UP * 0.08), run_time=0.6)
+        self.wait(2.6)
 
 
 class EEFull(NormalScene):
@@ -1873,6 +2228,8 @@ class EEFull(NormalScene):
             EE05,
             EE06,
             EE07,
+            EE07B,
+            EE07C,
             EE08,
         ]
         for i, scene_cls in enumerate(beats):
