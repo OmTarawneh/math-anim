@@ -18,3 +18,15 @@ dev = ["poethepoet>=0.44.0"]
 
 [tool.ruff.lint.per-file-ignores]
 "docs/*.py" = ["E402", "F401", "F403", "F405"]
+
+[tool.basedpyright]
+extraPaths = ["scenes"]
+reportImplicitOverride = false
+reportImplicitRelativeImport = false
+reportUnusedCallResult = false
+reportUnknownMemberType = false
+reportUnknownArgumentType = false
+reportUnknownVariableType = false
+reportUnknownParameterType = false
+reportMissingParameterType = false
+reportAny = false
